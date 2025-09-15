@@ -96,6 +96,8 @@ api.post('/reports/upsert', async (c) => {
 api.get('/dashboard/hq', async (c) => {
   // per-store + total
   const env = c.env.Bindings
+  const ym = c.req.query('ym')
+  const where = ym ? 'WHERE substr(dr.date,1,7)=?' : ''
   const perStore = await env.DB.prepare(
     `SELECT s.id as store_id, s.name as store_name,
             COALESCE(SUM(dr.sales_total),0) as sales_total,
@@ -103,19 +105,21 @@ api.get('/dashboard/hq', async (c) => {
             COALESCE(SUM(dr.profit),0) as profit,
             COALESCE(SUM(dr.royalty),0) as royalty
        FROM stores s
-       LEFT JOIN daily_reports dr ON dr.store_id = s.id
+       LEFT JOIN daily_reports dr ON dr.store_id = s.id ${where}
        GROUP BY s.id, s.name
        ORDER BY s.id`
-  ).all()
+  ).bind(...(ym?[ym]:[])).all()
   const total = await env.DB.prepare(
-    'SELECT COALESCE(SUM(sales_total),0) as sales_total, COALESCE(SUM(expense_total),0) as expense_total, COALESCE(SUM(profit),0) as profit, COALESCE(SUM(royalty),0) as royalty FROM daily_reports'
-  ).first()
-  return c.json({ per_store: perStore.results ?? [], total: total ?? { sales_total:0, expense_total:0, profit:0, royalty:0 } })
+    `SELECT COALESCE(SUM(sales_total),0) as sales_total, COALESCE(SUM(expense_total),0) as expense_total, COALESCE(SUM(profit),0) as profit, COALESCE(SUM(royalty),0) as royalty FROM daily_reports ${ym? 'WHERE substr(date,1,7)=?':''}`
+  ).bind(...(ym?[ym]:[])).first()
+  return c.json({ per_store: perStore.results ?? [], total: total ?? { sales_total:0, expense_total:0, profit:0, royalty:0 }, ym: ym||null })
 })
 
 api.get('/dashboard/agency/:id', async (c) => {
   const env = c.env.Bindings
   const id = Number(c.req.param('id'))
+  const ym = c.req.query('ym')
+  const whereYm = ym? ' AND substr(dr.date,1,7)=?': ''
   const perStore = await env.DB.prepare(
     `SELECT s.id as store_id, s.name as store_name,
             COALESCE(SUM(dr.sales_total),0) as sales_total,
@@ -124,18 +128,18 @@ api.get('/dashboard/agency/:id', async (c) => {
             COALESCE(SUM(dr.royalty),0) as royalty
        FROM stores s
        LEFT JOIN daily_reports dr ON dr.store_id = s.id
-       WHERE s.agency_id = ?
+       WHERE s.agency_id = ?${whereYm}
        GROUP BY s.id, s.name
        ORDER BY s.id`
-  ).bind(id).all()
+  ).bind(...(ym?[id, ym]:[id])).all()
   const total = await env.DB.prepare(
     `SELECT COALESCE(SUM(dr.royalty),0) as royalty, COALESCE(SUM(ac.amount),0) as agency_reward
        FROM daily_reports dr
        JOIN stores s ON s.id = dr.store_id
        LEFT JOIN agency_commissions ac ON ac.report_id = dr.id AND ac.agency_id = s.agency_id
-       WHERE s.agency_id = ?`
-  ).bind(id).first<{royalty:number, agency_reward:number}>()
-  return c.json({ per_store: perStore.results ?? [], total: total ?? { royalty:0, agency_reward:0 } })
+       WHERE s.agency_id = ?${whereYm}`
+  ).bind(...(ym?[id, ym]:[id])).first<{royalty:number, agency_reward:number}>()
+  return c.json({ per_store: perStore.results ?? [], total: total ?? { royalty:0, agency_reward:0 }, ym: ym||null })
 })
 
 api.get('/analytics/summary', async (c) => {

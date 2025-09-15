@@ -280,8 +280,9 @@
     }
 
     async function renderDashboards(){
-      const hq = await fetchJSON('/api/dashboard/hq')
-      const ag = await fetchJSON('/api/dashboard/agency/1')
+      const ym = new Date().toISOString().slice(0,7)
+      const hq = await fetchJSON(`/api/dashboard/hq?ym=${ym}`)
+      const ag = await fetchJSON(`/api/dashboard/agency/1?ym=${ym}`)
       $('#hq-total').textContent = `総売上 ${hq.total.sales_total||0} / 総利益 ${hq.total.profit||0} / ロイヤリティ ${hq.total.royalty||0}`
       $('#ag-total').textContent = `代理店報酬 ${ag.total.agency_reward||0}`
       const tbody = $('#hq-rows')
