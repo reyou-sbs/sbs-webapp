@@ -32,8 +32,8 @@ app.get('/', (c) => {
         <div class="flex items-center gap-3 mb-3">
           <label class="text-sm">日付</label>
           <input id="date" type="date" class="border rounded px-2 py-1" />
-          <button id="add-sale" class="ml-auto text-sm px-3 py-1 bg-blue-600 text-white rounded">売上行を追加</button>
-          <button id="add-expense" class="text-sm px-3 py-1 bg-emerald-600 text-white rounded">経費行を追加</button>
+          <button id="add-sale" class="ml-auto text-sm px-3 py-1 bg-blue-600 text-white rounded">売上報告</button>
+          <button id="add-expense" class="text-sm px-3 py-1 bg-emerald-600 text-white rounded">経費報告</button>
           <button id="save" class="text-sm px-4 py-1 bg-indigo-700 text-white rounded">保存</button>
         </div>
 
