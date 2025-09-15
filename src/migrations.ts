@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS users (
   agency_id INTEGER,
   store_id INTEGER,
   verified INTEGER DEFAULT 0,
+  verify_token TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (agency_id) REFERENCES agencies(id),
   FOREIGN KEY (store_id) REFERENCES stores(id)
