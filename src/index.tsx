@@ -8,8 +8,9 @@ import cron from './cron'
 import { renderer } from './renderer'
 import settings from './settings'
 import subs from './subscriptions'
+import admin from './admin'
 import type { Env } from './types'
-import { requireAuth } from './mw'
+import { requireAuth, requireRole } from './mw'
 
 const app = new Hono<Env>()
 
@@ -24,10 +25,12 @@ app.use('/api/*', requireAuth)
 app.use('/csv/*', requireAuth)
 app.use('/settings*', requireAuth)
 app.use('/subs*', requireAuth)
+app.use('/admin*', requireAuth)
 app.route('/api', api)
 app.route('/csv', csv)
 app.route('/settings', settings)
 app.route('/subs', subs)
+app.route('/admin', admin)
 app.route('/__cron', cron)
 
 // Home
