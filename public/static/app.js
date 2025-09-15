@@ -16,7 +16,10 @@
     const token = getToken()
     if(token) headers['Authorization'] = `Bearer ${token}`
     const res = await fetch(url, Object.assign({ headers }, opts))
-    if(!res.ok) throw new Error(await res.text())
+    if(!res.ok){
+      const txt = await res.text()
+      throw new Error(`${res.status}:${txt}`)
+    }
     const ct = res.headers.get('content-type')||''
     return ct.includes('application/json') ? res.json() : res.text()
   }
@@ -125,7 +128,7 @@
           toast(`保存しました: 売上 ${out.sales_total} 経費 ${out.expense_total} 収益 ${out.profit} ロイヤリティ ${out.royalty}`)
           await renderDashboards()
         }catch(err){
-          toast('保存に失敗しました')
+          toast(`保存に失敗: ${err.message||err}`)
           console.error(err)
         }
       }

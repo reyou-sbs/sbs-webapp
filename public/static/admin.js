@@ -4,7 +4,10 @@
     const token = localStorage.getItem('token')||''
     if(token) headers['Authorization'] = `Bearer ${token}`
     const res = await fetch(url, Object.assign({ headers }, opts))
-    if(!res.ok) throw new Error(await res.text())
+    if(!res.ok){
+      const txt = await res.text()
+      throw new Error(`${res.status}:${txt}`)
+    }
     const ct = res.headers.get('content-type')||''
     return ct.includes('application/json') ? res.json() : res.text()
   }
@@ -88,7 +91,7 @@
     $('#mn-add').onclick = async ()=>{
       const name = $('#mn-name').value
       const price = Number($('#mn-price').value||'0')
-      if(!name||!price) return
+      if(!name||price<=0) { alert('メニュー名と正の価格が必要です'); return }
       await fetchJSON('/admin/menus', { method:'POST', body: JSON.stringify({ name, price, active:1 }) })
       $('#mn-name').value=''; $('#mn-price').value=''
       await refresh()

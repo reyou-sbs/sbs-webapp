@@ -55,9 +55,10 @@ admin.post('/menus', requireRole('HQ'), async (c) => {
 admin.put('/menus/:id', requireRole('HQ'), async (c) => {
   const id = Number(c.req.param('id'))
   const { name, price, active } = await c.req.json<any>()
+  if (price!==undefined && (!Number.isFinite(Number(price)) || Number(price) < 0)) return c.json({ error:'invalid price' }, 422)
   const sets = [] as string[]; const vals = [] as any[]
   if (name!==undefined) { sets.push('name=?'); vals.push(name) }
-  if (price!==undefined) { sets.push('price=?'); vals.push(price) }
+  if (price!==undefined) { sets.push('price=?'); vals.push(Number(price)) }
   if (active!==undefined) { sets.push('active=?'); vals.push(active?1:0) }
   if (!sets.length) return c.json({ error:'no fields' }, 400)
   vals.push(id)
