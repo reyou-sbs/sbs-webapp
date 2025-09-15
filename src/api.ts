@@ -5,8 +5,9 @@ import { applyInit } from './migrations'
 const api = new Hono<Env>()
 
 api.get('/menus', async (c) => {
-  // placeholder
-  return c.json([{ id: 1, name: 'Facial A', price: 8000 }])
+  const rows = await c.env.Bindings.DB.prepare('SELECT id, name, price FROM menus ORDER BY id').all()
+  if (!rows || !('results' in rows)) return c.json([])
+  return c.json(rows.results)
 })
 
 api.post('/init', async (c) => {
