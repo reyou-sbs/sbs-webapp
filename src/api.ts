@@ -16,6 +16,21 @@ api.get('/expense-categories', async (c) => {
   return c.json(rows.results)
 })
 
+api.get('/agencies', async (c) => {
+  const rows = await c.env.Bindings.DB.prepare('SELECT id, name FROM agencies ORDER BY id').all()
+  return c.json(rows.results ?? [])
+})
+
+api.get('/stores', async (c) => {
+  const agencyId = c.req.query('agencyId')
+  if (agencyId) {
+    const rows = await c.env.Bindings.DB.prepare('SELECT id, name FROM stores WHERE agency_id=? ORDER BY id').bind(Number(agencyId)).all()
+    return c.json(rows.results ?? [])
+  }
+  const rows = await c.env.Bindings.DB.prepare('SELECT id, name FROM stores ORDER BY id').all()
+  return c.json(rows.results ?? [])
+})
+
 api.post('/reports/upsert', async (c) => {
   const payload = await c.req.json<{ store_id:number, date:string, sales?: Array<{menu_id:number, quantity?:number, amount:number, note?:string}>, expenses?: Array<{category_id:number, amount:number, note?:string}> }>()
   if (!payload?.store_id || !payload?.date) return c.json({ error:'store_id and date required' }, 400)

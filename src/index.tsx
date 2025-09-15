@@ -54,6 +54,7 @@ app.get('/', (c) => {
           <button id="save" class="text-sm px-4 py-1 bg-indigo-700 text-white rounded">保存</button>
         </div>
 
+        <div id="totals-preview" class="text-sm text-gray-600 mb-2"></div>
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div>
             <h3 class="font-medium">売上</h3>
@@ -103,7 +104,12 @@ app.get('/', (c) => {
       <div class="bg-white rounded shadow p-4 mt-6">
         <div class="flex items-center justify-between mb-2">
           <h2 class="font-semibold">通知・設定（HQのみ）</h2>
-          <a class="text-sm text-blue-700 underline" href="/csv/agency-summary?agencyId=1&year=2025&month=09" target="_blank">CSVダウンロード（代理店）</a>
+          <div class="flex items-center gap-2 text-sm">
+            <select id="csv_agency" class="border rounded px-2 py-1"></select>
+            <input id="csv_year" type="number" class="border rounded px-2 py-1 w-24" placeholder="2025"/>
+            <input id="csv_month" type="number" class="border rounded px-2 py-1 w-20" placeholder="9"/>
+            <a id="csv_link" class="text-blue-700 underline" href="#" target="_blank">CSVダウンロード（代理店）</a>
+          </div>
         </div>
         <form id="settings-form" class="space-y-2">
           <div>

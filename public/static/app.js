@@ -82,6 +82,15 @@
         if(e.target.classList.contains('del')) e.target.closest('tr').remove()
       })
 
+      async function updateTotalsPreview(){
+        const salesSum = $$('#sales-rows tr').reduce((acc,tr)=> acc + Number($('.amount', tr).value||'0'), 0)
+        const expSum = $$('#expense-rows tr').reduce((acc,tr)=> acc + Number($('.amount', tr).value||'0'), 0)
+        const profit = Math.max(0, salesSum - expSum)
+        $('#totals-preview').textContent = `売上合計 ${salesSum} / 経費合計 ${expSum} / 利益 ${profit}`
+      }
+      $('#sales-table').addEventListener('input', updateTotalsPreview)
+      $('#expense-table').addEventListener('input', updateTotalsPreview)
+
       $('#save').onclick = async ()=>{
         state.date = $('#date').value
         const sales = $$('#sales-rows tr').map(tr=>({
@@ -108,6 +117,29 @@
       await renderDashboards()
       await mountSettings()
       await mountSubs()
+      await mountCsvUi()
+    }
+
+    async function mountCsvUi(){
+      try{
+        const agencies = await fetchJSON('/api/agencies')
+        const sel = document.getElementById('csv_agency')
+        sel.innerHTML = agencies.map(a=>`<option value="${a.id}">${a.name}</option>`).join('')
+        const year = new Date().getFullYear()
+        const month = new Date().getMonth()+1
+        document.getElementById('csv_year').value = year
+        document.getElementById('csv_month').value = month
+        const build = ()=>{
+          const aid = document.getElementById('csv_agency').value
+          const y = document.getElementById('csv_year').value
+          const m = document.getElementById('csv_month').value
+          document.getElementById('csv_link').href = `/csv/agency-summary?agencyId=${aid}&year=${y}&month=${m}`
+        }
+        document.getElementById('csv_agency').onchange = build
+        document.getElementById('csv_year').oninput = build
+        document.getElementById('csv_month').oninput = build
+        build()
+      }catch(e){ console.warn('csv ui init failed', e) }
     }
 
     async function mountSettings(){
