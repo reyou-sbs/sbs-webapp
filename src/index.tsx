@@ -5,6 +5,7 @@ import api from './api'
 import csv from './csv'
 import csvhq from './csv-hq'
 import csvStore from './csv-store'
+import csvRange from './csv-range'
 import auth from './auth'
 import cron from './cron'
 import { renderer } from './renderer'
@@ -34,6 +35,7 @@ app.route('/api', api)
 app.route('/csv', csv)
 app.route('/csv', csvhq)
 app.route('/csv', csvStore)
+app.route('/csv', csvRange)
 app.route('/settings', settings)
 app.route('/subs', subs)
 app.route('/admin', admin)

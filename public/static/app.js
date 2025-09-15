@@ -140,6 +140,7 @@
       await mountSettings()
       await mountSubs()
       await mountCsvUi()
+      await mountCsvRangeUi()
     }
 
     async function mountCsvUi(){
@@ -162,6 +163,71 @@
         document.getElementById('csv_month').oninput = build
         build()
       }catch(e){ console.warn('csv ui init failed', e) }
+    }
+
+    async function mountCsvRangeUi(){
+      try{
+        const role = localStorage.getItem('role')||''
+        if(role!=='HQ') return
+        const wrap = document.createElement('div')
+        wrap.className = 'bg-white rounded shadow p-4 mt-6'
+        wrap.innerHTML = `
+          <h2 class="font-semibold mb-2">CSV（範囲指定）</h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div>
+              <div class="mb-1">代理店範囲（月単位、店舗別）</div>
+              <div class="flex items-center gap-2">
+                <input id="r_agency" type="number" class="border rounded px-2 py-1 w-24" placeholder="agencyId"/>
+                <input id="r_start" type="month" class="border rounded px-2 py-1"/>
+                <input id="r_end" type="month" class="border rounded px-2 py-1"/>
+                <a id="r_agency_link" class="text-blue-700 underline" target="_blank">DL</a>
+              </div>
+            </div>
+            <div>
+              <div class="mb-1">HQ範囲（月単位、店舗別）</div>
+              <div class="flex items-center gap-2">
+                <input id="rh_start" type="month" class="border rounded px-2 py-1"/>
+                <input id="rh_end" type="month" class="border rounded px-2 py-1"/>
+                <a id="r_hq_link" class="text-blue-700 underline" target="_blank">DL</a>
+              </div>
+            </div>
+            <div>
+              <div class="mb-1">店舗範囲（日別）</div>
+              <div class="flex items-center gap-2">
+                <input id="rs_store" type="number" class="border rounded px-2 py-1 w-24" placeholder="storeId"/>
+                <input id="rs_start" type="month" class="border rounded px-2 py-1"/>
+                <input id="rs_end" type="month" class="border rounded px-2 py-1"/>
+                <a id="r_store_link" class="text-blue-700 underline" target="_blank">DL</a>
+              </div>
+            </div>
+          </div>
+        `
+        document.querySelector('.max-w-6xl').appendChild(wrap)
+        const y = new Date().getFullYear(); const m = String(new Date().getMonth()+1).padStart(2,'0')
+        document.getElementById('r_start').value = `${y}-${m}`
+        document.getElementById('r_end').value = `${y}-${m}`
+        document.getElementById('rh_start').value = `${y}-${m}`
+        document.getElementById('rh_end').value = `${y}-${m}`
+        document.getElementById('rs_start').value = `${y}-${m}`
+        document.getElementById('rs_end').value = `${y}-${m}`
+        const build = ()=>{
+          const aid = document.getElementById('r_agency').value
+          const s = document.getElementById('r_start').value
+          const e = document.getElementById('r_end').value
+          document.getElementById('r_agency_link').href = `/csv/agency-range?agencyId=${aid}&start=${s}&end=${e}`
+          const hs = document.getElementById('rh_start').value
+          const he = document.getElementById('rh_end').value
+          document.getElementById('r_hq_link').href = `/csv/hq-range?start=${hs}&end=${he}`
+          const rsId = document.getElementById('rs_store').value
+          const rs = document.getElementById('rs_start').value
+          const re = document.getElementById('rs_end').value
+          document.getElementById('r_store_link').href = `/csv/store-range?storeId=${rsId}&start=${rs}&end=${re}`
+        }
+        document.querySelectorAll('#r_agency,#r_start,#r_end,#rh_start,#rh_end,#rs_store,#rs_start,#rs_end').forEach(el=>{
+          el.addEventListener('input', build)
+        })
+        build()
+      }catch(e){ console.warn('csv range ui init failed', e) }
     }
 
     async function mountSettings(){
