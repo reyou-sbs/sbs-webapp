@@ -114,6 +114,7 @@ app.get('/', (c) => {
             <a id="csv_link" class="text-blue-700 underline" href="#" target="_blank">CSVダウンロード（代理店）</a>
           </div>
         </div>
+        <div id="hq-only" class="text-xs text-gray-500 mb-4">HQでログイン時のみ編集できます</div>
         <form id="settings-form" class="space-y-2">
           <div>
             <label class="text-sm mr-2">通知先メール</label>

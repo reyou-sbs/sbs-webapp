@@ -309,6 +309,15 @@
     })
   }
 
+  async function refreshRole(){
+    const token = getToken()
+    if(!token){ localStorage.removeItem('role'); return }
+    try{
+      const me = await fetchJSON('/auth/me')
+      localStorage.setItem('role', me.user.role)
+    }catch{ localStorage.removeItem('role') }
+  }
+
   function mountAuth(){
     document.getElementById('login-btn').onclick = async ()=>{
       try{
@@ -316,6 +325,7 @@
         const password = document.getElementById('login-pass').value
         const res = await fetchJSON('/auth/login', { method:'POST', body: JSON.stringify({ email, password }) })
         localStorage.setItem('token', res.token)
+        await refreshRole()
         toast('ログインしました')
         setAuthUI()
         location.reload()
@@ -323,11 +333,18 @@
     }
     document.getElementById('logout-btn').onclick = ()=>{
       localStorage.removeItem('token')
+      localStorage.removeItem('role')
       toast('ログアウトしました')
       setAuthUI()
       location.reload()
     }
     setAuthUI()
+    refreshRole().then(()=>{
+      const role = localStorage.getItem('role')||''
+      const hqOnly = document.getElementById('hq-only')
+      if(hqOnly) hqOnly.classList.toggle('hidden', role==='HQ')
+      // 設定や管理UIのボタン制御を将来ここに追加
+    })
   }
 
   function mountApp(){
