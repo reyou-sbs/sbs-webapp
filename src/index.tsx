@@ -8,6 +8,7 @@ import cron from './cron'
 import { renderer } from './renderer'
 import settings from './settings'
 import type { Env } from './types'
+import { requireAuth } from './mw'
 
 const app = new Hono<Env>()
 
@@ -17,9 +18,12 @@ app.use('/static/*', serveStatic({ root: './public' }))
 app.use(renderer)
 
 // Routes
+app.route('/auth', auth)
+app.use('/api/*', requireAuth)
+app.use('/csv/*', requireAuth)
+app.use('/settings*', requireAuth)
 app.route('/api', api)
 app.route('/csv', csv)
-app.route('/auth', auth)
 app.route('/settings', settings)
 app.route('/__cron', cron)
 
@@ -27,7 +31,15 @@ app.route('/__cron', cron)
 app.get('/', (c) => {
   return c.render(
     <div>
-      <h1 class="text-2xl font-bold mb-4"><i class="fas fa-store mr-2"></i> 売上報告・管理</h1>
+      <div class="flex items-center justify-between mb-4">
+        <h1 class="text-2xl font-bold"><i class="fas fa-store mr-2"></i> 売上報告・管理</h1>
+        <div class="flex items-center gap-2">
+          <input id="login-email" type="email" placeholder="email" class="border rounded px-2 py-1" />
+          <input id="login-pass" type="password" placeholder="password" class="border rounded px-2 py-1" />
+          <button id="login-btn" class="text-sm px-3 py-1 bg-black text-white rounded">ログイン</button>
+          <button id="logout-btn" class="text-sm px-3 py-1 bg-gray-600 text-white rounded hidden">ログアウト</button>
+        </div>
+      </div>
 
       <div class="bg-white rounded shadow p-4 mb-6">
         <h2 class="font-semibold mb-3">日次入力</h2>

@@ -10,8 +10,12 @@
     setTimeout(()=>t.remove(), 2000)
   }
 
+  function getToken(){ return localStorage.getItem('token')||'' }
   async function fetchJSON(url, opts={}){
-    const res = await fetch(url, Object.assign({ headers:{'Content-Type':'application/json'} }, opts))
+    const headers = Object.assign({ 'Content-Type':'application/json' }, (opts.headers||{}))
+    const token = getToken()
+    if(token) headers['Authorization'] = `Bearer ${token}`
+    const res = await fetch(url, Object.assign({ headers }, opts))
     if(!res.ok) throw new Error(await res.text())
     const ct = res.headers.get('content-type')||''
     return ct.includes('application/json') ? res.json() : res.text()
@@ -169,8 +173,45 @@
     return { mount }
   }
 
+  function setAuthUI(){
+    const token = getToken()
+    const loggedIn = !!token
+    document.getElementById('login-email').classList.toggle('hidden', loggedIn)
+    document.getElementById('login-pass').classList.toggle('hidden', loggedIn)
+    document.getElementById('login-btn').classList.toggle('hidden', loggedIn)
+    document.getElementById('logout-btn').classList.toggle('hidden', !loggedIn)
+    // lock forms
+    const disabled = !loggedIn
+    ;['date','add-sale','add-expense','save','save-settings'].forEach(id=>{
+      const el = document.getElementById(id)
+      if(el){ el.disabled = disabled; el.classList.toggle('opacity-50', disabled) }
+    })
+  }
+
+  function mountAuth(){
+    document.getElementById('login-btn').onclick = async ()=>{
+      try{
+        const email = document.getElementById('login-email').value
+        const password = document.getElementById('login-pass').value
+        const res = await fetchJSON('/auth/login', { method:'POST', body: JSON.stringify({ email, password }) })
+        localStorage.setItem('token', res.token)
+        toast('ログインしました')
+        setAuthUI()
+        location.reload()
+      }catch(e){ toast('ログイン失敗'); console.error(e) }
+    }
+    document.getElementById('logout-btn').onclick = ()=>{
+      localStorage.removeItem('token')
+      toast('ログアウトしました')
+      setAuthUI()
+      location.reload()
+    }
+    setAuthUI()
+  }
+
   function mountApp(){
     if(!document.getElementById('app')) return
+    mountAuth()
     const sheet = Sheet()
     sheet.mount()
   }
