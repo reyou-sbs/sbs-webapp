@@ -93,12 +93,20 @@
 
       $('#save').onclick = async ()=>{
         state.date = $('#date').value
-        const sales = $$('#sales-rows tr').map(tr=>({
-          menu_id: Number($('.menu_id', tr).value),
-          quantity: Number($('.qty', tr).value||'1'),
-          amount: Number($('.amount', tr).value||'0'),
-          note: $('.note', tr).value
-        })).filter(r=>r.amount>0)
+        const sales = $$('#sales-rows tr').map(tr=>{
+          const menuId = Number($('.menu_id', tr).value)
+          const qty = Number($('.qty', tr).value||'1')
+          let amount = Number($('.amount', tr).value||'0')
+          // 金額未入力ならメニュー価格×数量で自動補完
+          const m = (masters.menus||[]).find(x=>x.id===menuId)
+          if(amount<=0 && m){ amount = Number(m.price||0) * (qty||1) }
+          return {
+            menu_id: menuId,
+            quantity: qty,
+            amount,
+            note: $('.note', tr).value
+          }
+        }).filter(r=>r.amount>0)
         const expenses = $$('#expense-rows tr').map(tr=>({
           category_id: Number($('.category_id', tr).value),
           amount: Number($('.amount', tr).value||'0'),
@@ -112,6 +120,12 @@
           toast('保存に失敗しました')
           console.error(err)
         }
+      }
+
+      document.getElementById('ym_input').value = currentYM
+      document.getElementById('ym_refresh').onclick = async ()=>{
+        currentYM = document.getElementById('ym_input').value || currentYM
+        await renderDashboards()
       }
 
       await renderDashboards()
@@ -279,8 +293,9 @@
       await loadList()
     }
 
+    let currentYM = new Date().toISOString().slice(0,7)
     async function renderDashboards(){
-      const ym = new Date().toISOString().slice(0,7)
+      const ym = currentYM
       const hq = await fetchJSON(`/api/dashboard/hq?ym=${ym}`)
       const ag = await fetchJSON(`/api/dashboard/agency/1?ym=${ym}`)
       $('#hq-total').textContent = `総売上 ${hq.total.sales_total||0} / 総利益 ${hq.total.profit||0} / ロイヤリティ ${hq.total.royalty||0}`

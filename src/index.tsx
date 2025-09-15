@@ -93,7 +93,13 @@ app.get('/', (c) => {
 
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div class="bg-white rounded shadow p-4 lg:col-span-2">
-          <h2 class="font-semibold mb-3">HQダッシュボード</h2>
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="font-semibold">HQダッシュボード</h2>
+            <div class="flex items-center gap-2 text-sm">
+              <input id="ym_input" type="month" class="border rounded px-2 py-1" />
+              <button id="ym_refresh" class="px-3 py-1 bg-slate-700 text-white rounded">更新</button>
+            </div>
+          </div>
           <div id="hq-total" class="text-sm text-gray-600 mb-2"></div>
           <div class="overflow-x-auto"><table class="w-full text-sm">
             <thead><tr class="text-left text-gray-500"><th>店舗</th><th>売上</th><th>経費</th><th>利益</th><th>ロイヤリティ</th></tr></thead>
