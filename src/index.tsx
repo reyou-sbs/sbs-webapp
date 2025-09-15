@@ -7,6 +7,7 @@ import auth from './auth'
 import cron from './cron'
 import { renderer } from './renderer'
 import settings from './settings'
+import subs from './subscriptions'
 import type { Env } from './types'
 import { requireAuth } from './mw'
 
@@ -22,9 +23,11 @@ app.route('/auth', auth)
 app.use('/api/*', requireAuth)
 app.use('/csv/*', requireAuth)
 app.use('/settings*', requireAuth)
+app.use('/subs*', requireAuth)
 app.route('/api', api)
 app.route('/csv', csv)
 app.route('/settings', settings)
+app.route('/subs', subs)
 app.route('/__cron', cron)
 
 // Home
@@ -98,7 +101,10 @@ app.get('/', (c) => {
       </div>
 
       <div class="bg-white rounded shadow p-4 mt-6">
-        <h2 class="font-semibold mb-3">通知・設定（HQのみ）</h2>
+        <div class="flex items-center justify-between mb-2">
+          <h2 class="font-semibold">通知・設定（HQのみ）</h2>
+          <a class="text-sm text-blue-700 underline" href="/csv/agency-summary?agencyId=1&year=2025&month=09" target="_blank">CSVダウンロード（代理店）</a>
+        </div>
         <form id="settings-form" class="space-y-2">
           <div>
             <label class="text-sm mr-2">通知先メール</label>

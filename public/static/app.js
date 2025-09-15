@@ -107,6 +107,7 @@
 
       await renderDashboards()
       await mountSettings()
+      await mountSubs()
     }
 
     async function mountSettings(){
@@ -135,6 +136,94 @@
           toast('設定を保存しました')
         }catch(err){ toast('設定保存に失敗しました'); console.error(err) }
       }
+    }
+
+    async function mountSubs(){
+      const wrap = document.createElement('div')
+      wrap.className = 'bg-white rounded shadow p-4 mt-6'
+      wrap.innerHTML = `
+        <h2 class="font-semibold mb-3">サブスク管理</h2>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div>
+            <div class="text-sm text-gray-600 mb-2">登録フォーム</div>
+            <div class="space-y-2">
+              <input id="sub_customer" class="border rounded px-2 py-1 w-72" placeholder="顧客名(任意)"/>
+              <input id="sub_price" type="number" class="border rounded px-2 py-1 w-40" placeholder="価格"/>
+              <select id="sub_menu" class="border rounded px-2 py-1 w-72"></select>
+              <select id="sub_cycle" class="border rounded px-2 py-1 w-48">
+                <option value="days">日数</option>
+                <option value="monthly">毎月の特定日</option>
+                <option value="month_end">月末</option>
+              </select>
+              <input id="sub_days" type="number" class="border rounded px-2 py-1 w-32" placeholder="日数(例30)"/>
+              <input id="sub_specific" type="number" class="border rounded px-2 py-1 w-32" placeholder="日(例15)"/>
+              <input id="sub_next" type="date" class="border rounded px-2 py-1"/>
+              <button id="sub_create" class="text-sm px-3 py-1 bg-indigo-700 text-white rounded">作成</button>
+            </div>
+          </div>
+          <div>
+            <div class="text-sm text-gray-600 mb-2">一覧</div>
+            <table class="w-full text-sm">
+              <thead><tr class="text-left text-gray-500"><th>顧客</th><th>メニュー</th><th>価格</th><th>周期</th><th>次回</th><th>状態</th><th></th></tr></thead>
+              <tbody id="subs-rows"></tbody>
+            </table>
+          </div>
+        </div>
+      `
+      document.querySelector('.max-w-6xl').appendChild(wrap)
+
+      const menus = await fetchJSON('/api/menus')
+      const sel = document.getElementById('sub_menu')
+      sel.innerHTML = menus.map(m=>`<option value="${m.id}">${m.name} (${m.price})</option>`).join('')
+
+      async function loadList(){
+        const list = await fetchJSON('/subs/subscriptions?store_id=1')
+        const tb = document.getElementById('subs-rows')
+        tb.innerHTML = ''
+        for(const s of list){
+          const cyc = s.cycle_type==='days'? `${s.cycle_days}日`: (s.cycle_type==='monthly'? `毎月${s.specific_day}日`: '月末')
+          tb.insertAdjacentHTML('beforeend', `<tr>
+            <td class="px-2 py-1">${s.customer_name||''}</td>
+            <td class="px-2 py-1">${s.menu_name}</td>
+            <td class="px-2 py-1 text-right">${s.price}</td>
+            <td class="px-2 py-1">${cyc}</td>
+            <td class="px-2 py-1">${s.next_charge_date}</td>
+            <td class="px-2 py-1">${s.active? '稼働':'停止'}</td>
+            <td class="px-2 py-1"><button data-id="${s.id}" class="toggle text-blue-600">切替</button></td>
+          </tr>`)
+        }
+      }
+
+      document.getElementById('sub_create').onclick = async ()=>{
+        const payload = {
+          store_id: 1,
+          customer_name: document.getElementById('sub_customer').value || null,
+          price: Number(document.getElementById('sub_price').value||'0'),
+          menu_id: Number(document.getElementById('sub_menu').value),
+          cycle_type: document.getElementById('sub_cycle').value,
+          cycle_days: Number(document.getElementById('sub_days').value||'0')||null,
+          specific_day: Number(document.getElementById('sub_specific').value||'0')||null,
+          next_charge_date: document.getElementById('sub_next').value
+        }
+        try{
+          await fetchJSON('/subs/subscriptions', { method:'POST', body: JSON.stringify(payload) })
+          toast('作成しました')
+          await loadList()
+        }catch(e){ toast('作成に失敗'); console.error(e) }
+      }
+
+      document.getElementById('subs-rows').addEventListener('click', async (e)=>{
+        const btn = e.target.closest('button.toggle')
+        if(!btn) return
+        const id = btn.getAttribute('data-id')
+        try{
+          await fetchJSON(`/subs/subscriptions/${id}/toggle`, { method:'POST' })
+          toast('切替しました')
+          await loadList()
+        }catch(err){ toast('切替失敗'); console.error(err) }
+      })
+
+      await loadList()
     }
 
     async function renderDashboards(){
