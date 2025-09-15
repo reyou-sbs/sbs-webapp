@@ -19,6 +19,16 @@ export async function getSettingNumber(env: Bindings, key: string, fallback: num
   return Number.isFinite(n) ? n : fallback
 }
 
+export async function getStore(env: Bindings, storeId: number) {
+  return await env.DB.prepare('SELECT id, name, agency_id FROM stores WHERE id=?').bind(storeId).first<{id:number,name:string,agency_id:number|null}>()
+}
+
+export async function sumMonthForStore(env: Bindings, storeId: number, ym: string) {
+  const row = await env.DB.prepare('SELECT COALESCE(SUM(sales_total),0) as sales FROM daily_reports WHERE store_id=? AND substr(date,1,7)=?')
+    .bind(storeId, ym).first<{sales:number}>()
+  return row?.sales ?? 0
+}
+
 export async function recomputeDailyReport(env: Bindings, reportId: number) {
   const sales = await env.DB.prepare('SELECT COALESCE(SUM(amount),0) as total FROM sales_items WHERE report_id=?').bind(reportId).first<{ total: number }>()
   const expense = await env.DB.prepare('SELECT COALESCE(SUM(amount),0) as total FROM expense_items WHERE report_id=?').bind(reportId).first<{ total: number }>()

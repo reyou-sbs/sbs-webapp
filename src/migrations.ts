@@ -123,6 +123,7 @@ CREATE TABLE IF NOT EXISTS settings (
   key TEXT PRIMARY KEY,
   value TEXT NOT NULL
 );
+-- recommended keys: royalty_rate, agency_commission_rate, notify_email, goal_monthly
 
 CREATE TABLE IF NOT EXISTS notification_templates (
   key TEXT PRIMARY KEY,

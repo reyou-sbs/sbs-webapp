@@ -38,6 +38,39 @@ api.post('/reports/upsert', async (c) => {
     }
   }
   const totals = await recomputeDailyReport(env, reportId)
+
+  // 通知（単日売上）
+  try {
+    const { maybeSendSingleSale, maybeSendMonthlyMilestone, shouldNotifyMilestone } = await import('./notifications')
+    const { getStore, sumMonthForStore } = await import('./services')
+    const store = await getStore(env, payload.store_id)
+    if (store) {
+      await maybeSendSingleSale(env, {
+        store: store.name,
+        date: payload.date,
+        sales_total: totals.sales_total
+      })
+      // 月次達成通知（閾値は settings.goal_monthly で任意に設定）
+      const ym = payload.date.slice(0,7)
+      const row = await env.DB.prepare('SELECT value FROM settings WHERE key="goal_monthly"').first<{value:string}>()
+      const goal = Number(row?.value || '0')
+      if (goal > 0) {
+        const amount = await sumMonthForStore(env, payload.store_id, ym)
+        const hit = await shouldNotifyMilestone(env, payload.store_id, ym, goal, amount)
+        if (hit) {
+          await maybeSendMonthlyMilestone(env, {
+            store: store.name,
+            year: ym.slice(0,4),
+            month: ym.slice(5,7),
+            amount
+          })
+        }
+      }
+    }
+  } catch (e) {
+    console.warn('notify failed', e)
+  }
+
   return c.json({ ok:true, report_id: reportId, ...totals })
 })
 
