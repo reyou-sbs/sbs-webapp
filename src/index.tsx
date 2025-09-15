@@ -3,6 +3,7 @@ import { cors } from 'hono/cors'
 import { serveStatic } from 'hono/cloudflare-workers'
 import api from './api'
 import csv from './csv'
+import csvhq from './csv-hq'
 import auth from './auth'
 import cron from './cron'
 import { renderer } from './renderer'
@@ -30,6 +31,7 @@ app.use('/admin*', requireAuth)
 app.use('/approval*', requireAuth)
 app.route('/api', api)
 app.route('/csv', csv)
+app.route('/csv', csvhq)
 app.route('/settings', settings)
 app.route('/subs', subs)
 app.route('/admin', admin)

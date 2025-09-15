@@ -364,6 +364,8 @@
       const role = localStorage.getItem('role')||''
       const hqOnly = document.getElementById('hq-only')
       if(hqOnly) hqOnly.classList.toggle('hidden', role==='HQ')
+      const link = document.getElementById('csv_link')
+      if(link) link.classList.toggle('hidden', role!=='HQ')
       // 設定や管理UIのボタン制御を将来ここに追加
     })
   }
