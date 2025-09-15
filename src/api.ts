@@ -52,6 +52,10 @@ api.post('/reports/upsert', async (c) => {
         .bind(reportId, e.category_id, e.amount, e.note ?? null).run()
     }
   }
+  // 変更禁止チェック（locked）
+  const locked = await env.DB.prepare('SELECT locked FROM daily_reports WHERE id=?').bind(reportId).first<{locked:number}>()
+  if (locked?.locked) return c.json({ error:'report locked' }, 423)
+
   const totals = await recomputeDailyReport(env, reportId)
 
   // 通知（単日売上）

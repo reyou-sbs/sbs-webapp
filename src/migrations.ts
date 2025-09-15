@@ -58,6 +58,7 @@ CREATE TABLE IF NOT EXISTS daily_reports (
   profit INTEGER DEFAULT 0,
   royalty INTEGER DEFAULT 0,
   agency_commission INTEGER DEFAULT 0,
+  locked INTEGER DEFAULT 0,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   UNIQUE(store_id, date),
   FOREIGN KEY (store_id) REFERENCES stores(id)
@@ -132,11 +133,24 @@ CREATE TABLE IF NOT EXISTS notification_templates (
   body TEXT NOT NULL
 );
 
+-- Approval/Lock extensions
+CREATE TABLE IF NOT EXISTS audit_logs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  user_id INTEGER,
+  action TEXT NOT NULL,
+  store_id INTEGER,
+  report_id INTEGER,
+  date TEXT,
+  details TEXT
+);
+
 -- Helpful indexes
 CREATE INDEX IF NOT EXISTS idx_reports_store_date ON daily_reports(store_id, date);
 CREATE INDEX IF NOT EXISTS idx_sales_report ON sales_items(report_id);
 CREATE INDEX IF NOT EXISTS idx_expense_report ON expense_items(report_id);
 CREATE INDEX IF NOT EXISTS idx_subscriptions_next ON subscriptions(next_charge_date, active);
+CREATE INDEX IF NOT EXISTS idx_audit_store_date ON audit_logs(store_id, date);
 `;
 
 export const SEED_SQL = `

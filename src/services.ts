@@ -39,6 +39,8 @@ export async function recomputeDailyReport(env: Bindings, reportId: number) {
   const agency_rate = await getSettingNumber(env, 'agency_commission_rate', 0.1)
   const royalty = Math.floor(profit * royalty_rate)
   const agency_commission = Math.floor(royalty * agency_rate)
+  // 施錠中は再計算のみ許可（合計値更新は許容）
+  const lockedRow = await env.DB.prepare('SELECT locked FROM daily_reports WHERE id=?').bind(reportId).first<{locked:number}>()
   await env.DB.prepare(
     'UPDATE daily_reports SET sales_total=?, expense_total=?, profit=?, royalty=?, agency_commission=? WHERE id=?'
   ).bind(sales_total, expense_total, profit, royalty, agency_commission, reportId).run()

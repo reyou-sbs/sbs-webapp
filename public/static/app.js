@@ -244,6 +244,27 @@
         }catch(e){ toast('作成に失敗'); console.error(e) }
       }
 
+      // 承認/ロックUI（簡易）
+      const lockBox = document.createElement('div')
+      lockBox.className = 'mt-4 text-sm'
+      lockBox.innerHTML = `
+        <div class="flex items-center gap-2">
+          <input id="lock_date" type="date" class="border rounded px-2 py-1"/>
+          <button id="btn-lock" class="px-3 py-1 bg-zinc-700 text-white rounded">ロック</button>
+          <button id="btn-unlock" class="px-3 py-1 bg-zinc-500 text-white rounded">ロック解除(HQ)</button>
+        </div>`
+      wrap.appendChild(lockBox)
+      document.getElementById('btn-lock').onclick = async ()=>{
+        const date = document.getElementById('lock_date').value
+        if(!date) return
+        try{ await fetchJSON('/approval/lock', { method:'POST', body: JSON.stringify({ store_id:1, date }) }); toast('ロックしました') }catch(e){ toast('ロック失敗'); console.error(e) }
+      }
+      document.getElementById('btn-unlock').onclick = async ()=>{
+        const date = document.getElementById('lock_date').value
+        if(!date) return
+        try{ await fetchJSON('/approval/unlock', { method:'POST', body: JSON.stringify({ store_id:1, date }) }); toast('解除しました') }catch(e){ toast('解除失敗'); console.error(e) }
+      }
+
       document.getElementById('subs-rows').addEventListener('click', async (e)=>{
         const btn = e.target.closest('button.toggle')
         if(!btn) return
