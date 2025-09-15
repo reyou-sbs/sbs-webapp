@@ -140,7 +140,8 @@ CREATE INDEX IF NOT EXISTS idx_subscriptions_next ON subscriptions(next_charge_d
 export const SEED_SQL = `
 INSERT OR IGNORE INTO settings(key, value) VALUES
   ('royalty_rate','0.5'),
-  ('agency_commission_rate','0.1');
+  ('agency_commission_rate','0.1'),
+  ('notify_email','');
 
 INSERT OR IGNORE INTO notification_templates(key, subject, body) VALUES
   ('sale_confirmed','売上確定','{{store}} の {{date}} 売上は {{sales_total}} 円でした。おめでとうございます！'),

@@ -6,6 +6,7 @@ import csv from './csv'
 import auth from './auth'
 import cron from './cron'
 import { renderer } from './renderer'
+import settings from './settings'
 import type { Env } from './types'
 
 const app = new Hono<Env>()
@@ -19,6 +20,7 @@ app.use(renderer)
 app.route('/api', api)
 app.route('/csv', csv)
 app.route('/auth', auth)
+app.route('/settings', settings)
 app.route('/__cron', cron)
 
 // Home
@@ -81,6 +83,29 @@ app.get('/', (c) => {
       <div class="bg-white rounded shadow p-4 mt-6">
         <h2 class="font-semibold mb-3">代理店ダッシュボード</h2>
         <div id="ag-total" class="text-sm text-gray-600"></div>
+      </div>
+
+      <div class="bg-white rounded shadow p-4 mt-6">
+        <h2 class="font-semibold mb-3">通知・設定（HQのみ）</h2>
+        <form id="settings-form" class="space-y-2">
+          <div>
+            <label class="text-sm mr-2">通知先メール</label>
+            <input id="notify_email" type="email" class="border rounded px-2 py-1 w-80" placeholder="hq@example.com" />
+          </div>
+          <div class="flex gap-3">
+            <div>
+              <div class="text-sm text-gray-500">単日売上テンプレ(subject/body)</div>
+              <input id="tpl_sale_subject" class="border rounded px-2 py-1 w-96 mb-1" placeholder="売上確定: {{store}} {{date}}"/>
+              <textarea id="tpl_sale_body" class="border rounded px-2 py-1 w-96 h-24" placeholder="{{store}} の {{date}} 売上は {{sales_total}} 円でした。"></textarea>
+            </div>
+            <div>
+              <div class="text-sm text-gray-500">月商達成テンプレ(subject/body)</div>
+              <input id="tpl_month_subject" class="border rounded px-2 py-1 w-96 mb-1" placeholder="月商達成: {{store}}"/>
+              <textarea id="tpl_month_body" class="border rounded px-2 py-1 w-96 h-24" placeholder="{{store}} の {{year}}/{{month}} 月商が {{amount}} 円に到達！"></textarea>
+            </div>
+          </div>
+          <button id="save-settings" type="button" class="text-sm px-3 py-1 bg-slate-700 text-white rounded">保存</button>
+        </form>
       </div>
     </div>
   )

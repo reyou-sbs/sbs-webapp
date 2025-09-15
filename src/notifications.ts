@@ -1,15 +1,36 @@
 import type { Bindings } from './types'
 
-export async function maybeSendSingleSale(env: Bindings, to: string, payload: Record<string,string|number>) {
-  const subject = `売上確定: ${payload.store} ${payload.date}`
-  const body = `${payload.store} の ${payload.date} 売上は ${payload.sales_total} 円でした。`
-  await sendEmail(env, to, subject, body)
+type Template = { subject: string, body: string }
+
+async function getSetting(env: Bindings, key: string) {
+  return await env.DB.prepare('SELECT value FROM settings WHERE key=?').bind(key).first<{value:string}>()
 }
 
-export async function maybeSendMonthlyMilestone(env: Bindings, to: string, payload: Record<string,string|number>) {
-  const subject = `月商達成: ${payload.store}`
-  const body = `${payload.year}/${payload.month} 月商が ${payload.amount} 円に到達！`
-  await sendEmail(env, to, subject, body)
+async function getTemplate(env: Bindings, key: string): Promise<Template | null> {
+  const row = await env.DB.prepare('SELECT subject, body FROM notification_templates WHERE key=?').bind(key).first<{subject:string, body:string}>()
+  return row ? { subject: row.subject, body: row.body } : null
+}
+
+function renderTemplate(tpl: string, data: Record<string, string|number>) {
+  return tpl.replace(/{{\s*(\w+)\s*}}/g, (_, k) => String(data[k] ?? ''))
+}
+
+export async function maybeSendSingleSale(env: Bindings, payload: Record<string,string|number>) {
+  const s = await getSetting(env, 'notify_email')
+  if (!s?.value) return
+  const t = (await getTemplate(env, 'sale_confirmed')) || { subject: '売上確定', body: '{{store}} の {{date}} 売上は {{sales_total}} 円でした。' }
+  const subject = renderTemplate(t.subject, payload)
+  const body = renderTemplate(t.body, payload)
+  await sendEmail(env, s.value, subject, body)
+}
+
+export async function maybeSendMonthlyMilestone(env: Bindings, payload: Record<string,string|number>) {
+  const s = await getSetting(env, 'notify_email')
+  if (!s?.value) return
+  const t = (await getTemplate(env, 'month_milestone')) || { subject: '月商達成', body: '{{store}} の {{year}}/{{month}} 月商が {{amount}} 円に到達！' }
+  const subject = renderTemplate(t.subject, payload)
+  const body = renderTemplate(t.body, payload)
+  await sendEmail(env, s.value, subject, body)
 }
 
 async function sendEmail(env: Bindings, to: string, subject: string, body: string) {
@@ -26,4 +47,13 @@ async function sendEmail(env: Bindings, to: string, subject: string, body: strin
   if (!resp.ok) {
     console.warn('Resend failed', resp.status, await resp.text())
   }
+}
+
+export async function shouldNotifyMilestone(env: Bindings, storeId: number, ym: string, goal: number, amount: number) {
+  if (!goal || amount < goal) return false
+  const key = `milestone_${storeId}_${ym}`
+  const existed = await env.DB.prepare('SELECT value FROM settings WHERE key=?').bind(key).first()
+  if (existed) return false
+  await env.DB.prepare('INSERT INTO settings (key, value) VALUES (?, ?)').bind(key, '1').run()
+  return true
 }

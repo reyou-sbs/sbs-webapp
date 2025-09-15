@@ -102,6 +102,35 @@
       }
 
       await renderDashboards()
+      await mountSettings()
+    }
+
+    async function mountSettings(){
+      try{
+        const rows = await fetchJSON('/settings')
+        const map = Object.fromEntries(rows.map(r=>[r.key, r.value]))
+        if(map.notify_email) document.getElementById('notify_email').value = map.notify_email
+        if(map.tpl_sale_subject) document.getElementById('tpl_sale_subject').value = map.tpl_sale_subject
+        if(map.tpl_sale_body) document.getElementById('tpl_sale_body').value = map.tpl_sale_body
+        if(map.tpl_month_subject) document.getElementById('tpl_month_subject').value = map.tpl_month_subject
+        if(map.tpl_month_body) document.getElementById('tpl_month_body').value = map.tpl_month_body
+      }catch(e){ console.warn('settings load failed', e) }
+      document.getElementById('save-settings').onclick = async ()=>{
+        try{
+          const payload = {
+            notify_email: document.getElementById('notify_email').value,
+            tpl_sale_subject: document.getElementById('tpl_sale_subject').value,
+            tpl_sale_body: document.getElementById('tpl_sale_body').value,
+            tpl_month_subject: document.getElementById('tpl_month_subject').value,
+            tpl_month_body: document.getElementById('tpl_month_body').value,
+          }
+          await fetchJSON('/settings', { method:'POST', body: JSON.stringify(payload) })
+          // Also persist templates table
+          await fetchJSON('/settings/templates', { method:'POST', body: JSON.stringify({ key:'sale_confirmed', subject: payload.tpl_sale_subject, body: payload.tpl_sale_body }) })
+          await fetchJSON('/settings/templates', { method:'POST', body: JSON.stringify({ key:'month_milestone', subject: payload.tpl_month_subject, body: payload.tpl_month_body }) })
+          toast('設定を保存しました')
+        }catch(err){ toast('設定保存に失敗しました'); console.error(err) }
+      }
     }
 
     async function renderDashboards(){
