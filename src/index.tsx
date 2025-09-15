@@ -57,6 +57,8 @@ app.get('/', (c) => {
       <div class="bg-white rounded shadow p-4 mb-6">
         <h2 class="font-semibold mb-3">日次入力</h2>
         <div class="flex items-center gap-3 mb-3">
+          <label class="text-sm">店舗</label>
+          <select id="store_select" class="border rounded px-2 py-1 w-56"></select>
           <label class="text-sm">日付</label>
           <input id="date" type="date" class="border rounded px-2 py-1" />
           <button id="add-sale" class="ml-auto text-sm px-3 py-1 bg-blue-600 text-white rounded">売上報告</button>

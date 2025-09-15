@@ -30,11 +30,13 @@
     }
 
     async function loadMasters(){
-      const [menus, cats] = await Promise.all([
+      const [menus, cats, agencies, stores] = await Promise.all([
         fetchJSON('/api/menus'),
-        fetchJSON('/api/expense-categories')
+        fetchJSON('/api/expense-categories'),
+        fetchJSON('/api/agencies'),
+        fetchJSON('/api/stores')
       ])
-      return { menus, cats }
+      return { menus, cats, agencies, stores }
     }
 
     function rowSalesTpl(menus){
@@ -68,6 +70,11 @@
       const expTbody = $('#expense-rows')
 
       $('#date').value = state.date
+      // 店舗セレクタ
+      const stSel = document.getElementById('store_select')
+      stSel.innerHTML = masters.stores.map(s=>`<option value="${s.id}">${s.name}</option>`).join('')
+      stSel.value = String(state.store_id)
+      stSel.onchange = ()=>{ state.store_id = Number(stSel.value) }
 
       $('#add-sale').onclick = ()=>{
         salesTbody.insertAdjacentHTML('beforeend', rowSalesTpl(masters.menus))
@@ -86,7 +93,8 @@
         const salesSum = $$('#sales-rows tr').reduce((acc,tr)=> acc + Number($('.amount', tr).value||'0'), 0)
         const expSum = $$('#expense-rows tr').reduce((acc,tr)=> acc + Number($('.amount', tr).value||'0'), 0)
         const profit = Math.max(0, salesSum - expSum)
-        $('#totals-preview').textContent = `売上合計 ${salesSum} / 経費合計 ${expSum} / 利益 ${profit}`
+        const royalty = Math.floor(profit * 0.5)
+        $('#totals-preview').textContent = `売上合計 ${salesSum} / 経費合計 ${expSum} / 利益 ${profit} / ロイヤリティ ${royalty}`
       }
       $('#sales-table').addEventListener('input', updateTotalsPreview)
       $('#expense-table').addEventListener('input', updateTotalsPreview)
@@ -114,7 +122,7 @@
         })).filter(r=>r.amount>0)
         try{
           const out = await fetchJSON('/api/reports/upsert', { method:'POST', body: JSON.stringify({ store_id: state.store_id, date: state.date, sales, expenses }) })
-          toast(`保存しました: 売上 ${out.sales_total} 経費 ${out.expense_total} 収益 ${out.profit}`)
+          toast(`保存しました: 売上 ${out.sales_total} 経費 ${out.expense_total} 収益 ${out.profit} ロイヤリティ ${out.royalty}`)
           await renderDashboards()
         }catch(err){
           toast('保存に失敗しました')
